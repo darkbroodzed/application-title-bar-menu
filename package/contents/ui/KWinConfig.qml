@@ -119,7 +119,7 @@ Item {
     }
 
     function updateQdbusCommandName() {
-        updateCommandName(["/usr/lib/qt6/bin/qdbus", "qdbus", "qdbus6", "qdbus-qt6"], function (commandName) {
+        updateCommandName(["qdbus", "qdbus6", "qdbus-qt6", "/usr/lib/qt6/bin/qdbus"], function (commandName) {
             qdbusCommandName = commandName;
             qdbusCommandNameChanged();
         });
