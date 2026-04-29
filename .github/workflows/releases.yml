@@ -47,7 +47,6 @@ jobs:
             extra-cmake-modules \
             ninja-build \
             qt6-qtbase-devel \
-            qt6-qtdeclarative-devel \
             kf6-kwindowsystem-devel \
             dbusmenu-qt6-devel
 
