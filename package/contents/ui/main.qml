@@ -32,6 +32,7 @@ PlasmoidItem {
     property bool leftEdgeLocation: plasmoid.location === PlasmaCore.Types.LeftEdge
     property bool hideWidget: !tasksModel.hasActiveWindow && plasmoid.configuration.widgetElementsDisabledMode === WidgetElement.DisabledMode.Hide
     property bool editMode: Plasmoid.containment.corona?.editMode ?? false
+    property bool titleHoveredForMenu: false
 
     signal invokeKWinShortcut(string shortcut)
     signal widgetElementsLayoutUpdated
@@ -75,6 +76,8 @@ PlasmoidItem {
                     return windowIcon;
                 case WidgetElement.Type.Spacer:
                     return spacerIcon;
+                case WidgetElement.Type.AppMenu:
+                    return windowAppMenu;
                 }
             }
 
@@ -169,11 +172,14 @@ PlasmoidItem {
             property var modelData
             property bool empty: text === undefined || text === ""
             property bool hideEmpty: empty && plasmoid.configuration.windowTitleHideEmpty
+            property bool titleHoverActive: false
             property int windowTitleSource: plasmoid.configuration.overrideElementsMaximized && tasksModel.activeWindow.maximized ? plasmoid.configuration.windowTitleSourceMaximized : plasmoid.configuration.windowTitleSource
             property var titleTextReplacements: []
 
             Layout.minimumWidth: plasmoid.configuration.windowTitleMinimumWidth
-            Layout.maximumWidth: !hideEmpty ? plasmoid.configuration.windowTitleMaximumWidth : 0
+            Layout.maximumWidth: (titleHoverActive && plasmoid.configuration.windowTitleHideOnHover)
+                                  ? 0
+                                  : (!hideEmpty ? plasmoid.configuration.windowTitleMaximumWidth : 0)
             Layout.alignment: root.widgetAlignment
             Layout.fillWidth: plasmoid.configuration.widgetFillWidth
             Layout.fillHeight: true
@@ -196,6 +202,44 @@ PlasmoidItem {
 
             Accessible.role: Accessible.TitleBar
             Accessible.name: text
+
+            Behavior on Layout.maximumWidth {
+                NumberAnimation {
+                    duration: 200
+                    easing.type: Easing.InOutQuad
+                }
+            }
+
+            // ── Hover latch for app-menu reveal ───────────────────────────────
+            // Latch on: set when the title is hovered.
+            // Latch off: cleared when the mouse leaves the whole widget.
+            // This means hovering onto the AppMenu buttons (same widget) does
+            // NOT clear the latch, so the menu stays open.
+
+            HoverHandler {
+                id: titleHoverHandler
+                onHoveredChanged: {
+                    if (hovered) {
+                        windowTitleLabel.titleHoverActive = true
+                    }
+                }
+            }
+
+            Connections {
+                target: root
+                function onWidgetHoveredChanged() {
+                    if (!root.widgetHovered) {
+                        windowTitleLabel.titleHoverActive = false
+                    }
+                }
+            }
+
+            // Push the latch state up so AppMenuBar can read it.
+            Binding {
+                target: root
+                property: "titleHoveredForMenu"
+                value: windowTitleLabel.titleHoverActive
+            }
 
             TextMetrics {
                 id: textMetrics
@@ -264,6 +308,12 @@ PlasmoidItem {
     HoverHandler {
         id: widgetHoverHandler
         enabled: plasmoid.configuration.disableButtonsForNotHoveredWidget
+                 || plasmoid.configuration.windowTitleHideOnHover
+    }
+
+    Component {
+        id: windowAppMenu
+        AppMenuBar {}
     }
 
     fullRepresentation: Item {

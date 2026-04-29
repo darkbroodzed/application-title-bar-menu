@@ -114,6 +114,10 @@ function widgetElementModelFromName(name) {
             return {
                 "type": WidgetElement.Type.Spacer
             };
+        case "windowAppMenu":
+            return {
+                "type": WidgetElement.Type.AppMenu
+            };
     }
 }
 

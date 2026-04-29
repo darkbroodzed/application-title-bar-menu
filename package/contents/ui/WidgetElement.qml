@@ -12,7 +12,8 @@ QtObject {
         WindowControlButton,
         WindowTitle,
         WindowIcon,
-        Spacer
+        Spacer,
+        AppMenu
     }
 
     enum DisabledMode {

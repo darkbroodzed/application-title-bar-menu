@@ -1,25 +1,131 @@
 name: Releases
 
-on: 
+on:
   push:
     tags:
-    - 'v*'
+      - "v*"
+
 jobs:
-  build:
+  # ── Job 1: pure-QML .plasmoid (no C++ required) ──────────────────────────
+  # Identical to the original workflow.  Users who only need the basic widget
+  # (no embedded app-menu) can install this the usual way with kpackagetool6.
+  package-qml:
+    name: Package QML-only .plasmoid
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create .plasmoid archive
+        uses: thedoctor0/zip-release@0.7.5
+        with:
+          type: zip
+          filename: application-title-bar.plasmoid
+          directory: package
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: plasmoid
+          path: package/application-title-bar.plasmoid
+
+  # ── Job 2: CMake build → distributable tarball (with AppMenu C++ plugin) ──
+  # Runs inside a Fedora 41 container because it ships KDE Plasma 6 development
+  # packages (kf6-*, libdbusmenu-qt6-devel) in its default repos.
+  build-plugin:
+    name: Build C++ plugin (Fedora)
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:41
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          dnf install -y \
+            cmake \
+            extra-cmake-modules \
+            ninja-build \
+            qt6-qtbase-devel \
+            qt6-qtdeclarative-devel \
+            kf6-kwindowsystem-devel \
+            libdbusmenu-qt6-devel
+
+      - name: Configure
+        run: >
+          cmake -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_INSTALL_PREFIX=/usr
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Install to staging directory
+        run: DESTDIR=${{ github.workspace }}/staging cmake --install build
+
+      # Bundle the compiled plugin + QML package + an install script into a
+      # single tarball so users can install without building from source.
+      - name: Create install script
+        run: |
+          cat > ${{ github.workspace }}/staging/install.sh << 'EOF'
+          #!/usr/bin/env bash
+          set -e
+          SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+          # Locate the Qt 6 QML import path on the target system.
+          QML_DIR=$(qmake6 -query QT_INSTALL_QML 2>/dev/null || \
+                    qmake-qt6 -query QT_INSTALL_QML 2>/dev/null || \
+                    echo "/usr/lib64/qt6/qml")
+
+          PLUGIN_DEST="$QML_DIR/org/kde/applicationtitlebar"
+          echo "Installing plugin to $PLUGIN_DEST"
+          sudo mkdir -p "$PLUGIN_DEST"
+          sudo find "$SCRIPT_DIR/usr" \( -name "libapplicationtitlebar.so*" -o -name "qmldir" \) \
+               -exec cp -v {} "$PLUGIN_DEST/" \;
+
+          echo "Installing Plasma package"
+          PACKAGE_DIR=$(find "$SCRIPT_DIR/usr" -type d -name "com.github.antroids.application-title-bar" | head -1)
+          kpackagetool6 -t Plasma/Applet --install "$PACKAGE_DIR" 2>/dev/null || \
+          kpackagetool6 -t Plasma/Applet --upgrade "$PACKAGE_DIR"
+
+          echo ""
+          echo "Done!  Run: systemctl --user restart plasma-plasmashell.service"
+          EOF
+          chmod +x ${{ github.workspace }}/staging/install.sh
+
+      - name: Create release tarball
+        run: |
+          cd ${{ github.workspace }}
+          tar -czf application-title-bar-x86_64.tar.gz -C staging .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-tarball
+          path: application-title-bar-x86_64.tar.gz
+
+  # ── Job 3: create GitHub Release with both artifacts ──────────────────────
+  release:
+    name: Publish GitHub Release
+    needs: [package-qml, build-plugin]
     runs-on: ubuntu-latest
     permissions:
       contents: write
+
     steps:
-    - uses: actions/checkout@master
-    - name: Archive Release
-      uses: thedoctor0/zip-release@0.7.5
-      with:
-        type: 'zip'
-        filename: 'application-title-bar.plasmoid'
-        directory: 'package'
-    - name: Upload Release
-      uses: ncipollo/release-action@v1.12.0
-      with:
-        artifacts: "package/application-title-bar.plasmoid"
-        token: ${{ secrets.GITHUB_TOKEN }}
-        generateReleaseNotes: true
+      - name: Download .plasmoid artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: plasmoid
+
+      - name: Download plugin tarball artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: plugin-tarball
+
+      - name: Create release
+        uses: ncipollo/release-action@v1.12.0
+        with:
+          artifacts: "application-title-bar.plasmoid,application-title-bar-x86_64.tar.gz"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          generateReleaseNotes: true

@@ -90,6 +90,8 @@ RowLayout {
                             return windowIcon;
                         case WidgetElement.Type.Spacer:
                             return spacerIcon;
+                        case WidgetElement.Type.AppMenu:
+                            return appMenuPreview;
                         }
                     }
                 }
@@ -148,6 +150,20 @@ RowLayout {
                     source: "adjustcol"
                     height: widgetElements.iconSize
                     width: widgetElements.iconSize / 2
+                }
+            }
+
+            Component {
+                id: appMenuPreview
+
+                PlasmaComponents.Label {
+                    property var modelData
+
+                    text: i18n("Menu")
+                    height: widgetElements.iconSize
+                    width: widgetElements.iconSize
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
                 }
             }
         }
