@@ -13,7 +13,6 @@ include(KDECMakeSettings)
 include(KDECompilerSettings NO_POLICY_SCOPE)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets DBus Quick)
-find_package(dbusmenu-qt6 REQUIRED)
 
 add_subdirectory(plugin)
 

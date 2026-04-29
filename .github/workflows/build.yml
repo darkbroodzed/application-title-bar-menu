@@ -14,7 +14,7 @@ jobs:
     # and dbusmenu-qt6 development packages are available in the main repo.
     runs-on: ubuntu-latest
     container:
-      image: fedora:42
+      image: fedora:44
 
     steps:
       - uses: actions/checkout@v4

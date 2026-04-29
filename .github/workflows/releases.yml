@@ -35,7 +35,7 @@ jobs:
     name: Build C++ plugin (Fedora)
     runs-on: ubuntu-latest
     container:
-      image: fedora:42
+      image: fedora:44
 
     steps:
       - uses: actions/checkout@v4
