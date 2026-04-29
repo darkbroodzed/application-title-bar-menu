@@ -46,10 +46,10 @@ jobs:
             cmake \
             extra-cmake-modules \
             ninja-build \
+            git \
             qt6-qtbase-devel \
             qt6-qtdeclarative-devel \
-            kf6-kwindowsystem-devel \
-            dbusmenu-qt6-devel
+            kf6-kwindowsystem-devel
 
       - name: Configure
         run: >

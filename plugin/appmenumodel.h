@@ -15,6 +15,7 @@
 class DBusMenuImporter;
 class QMenu;
 class QQuickItem;
+Q_DECLARE_OPAQUE_POINTER(QQuickItem *)
 
 /**
  * AppMenuModel exposes the active window's D-Bus application menu as a flat

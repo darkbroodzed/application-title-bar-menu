@@ -2,6 +2,20 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+# dbusmenu-qt6 is not packaged by most distributions yet.
+# Try to find it locally first; if absent, fetch and build from KDE's source.
+find_package(dbusmenu-qt6 QUIET)
+if(NOT dbusmenu-qt6_FOUND)
+    message(STATUS "dbusmenu-qt6 not found locally — fetching from KDE source")
+    include(FetchContent)
+    FetchContent_Declare(dbusmenu-qt6
+        GIT_REPOSITORY https://invent.kde.org/libraries/dbusmenu-qt.git
+        GIT_TAG master
+    )
+    FetchContent_MakeAvailable(dbusmenu-qt6)
+endif()
+
+
 add_library(applicationtitlebar SHARED)
 
 qt_add_qml_module(applicationtitlebar
