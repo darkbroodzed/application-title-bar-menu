@@ -29,27 +29,29 @@ jobs:
           path: package/application-title-bar.plasmoid
 
   # ── Job 2: CMake build → distributable tarball (with AppMenu C++ plugin) ──
-  # Runs inside a Fedora 41 container because it ships KDE Plasma 6 development
-  # packages (kf6-*, libdbusmenu-qt6-devel) in its default repos.
   build-plugin:
-    name: Build C++ plugin (Fedora)
+    name: Build C++ plugin (Ubuntu 26.04)
     runs-on: ubuntu-latest
     container:
-      image: fedora:44
+      image: ubuntu:26.04
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Install build dependencies
+        env:
+          DEBIAN_FRONTEND: noninteractive
         run: |
-          dnf install -y \
+          apt-get update
+          apt-get install -y \
             cmake \
             extra-cmake-modules \
             ninja-build \
             git \
-            qt6-qtbase-devel \
-            qt6-qtdeclarative-devel \
-            kf6-kwindowsystem-devel
+            qt6-base-dev \
+            qt6-declarative-dev \
+            libkf6windowsystem-dev \
+            libdbusmenu-qt6-dev
 
       - name: Configure
         run: >
