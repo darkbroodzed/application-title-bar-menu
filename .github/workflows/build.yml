@@ -29,8 +29,7 @@ jobs:
             git \
             qt6-base-dev \
             qt6-declarative-dev \
-            libkf6windowsystem-dev \
-            libdbusmenu-qt6-dev
+            libkf6windowsystem-dev
 
       - name: Configure
         run: >
