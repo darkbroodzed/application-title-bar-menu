@@ -25,9 +25,10 @@ jobs:
             cmake \
             extra-cmake-modules \
             ninja-build \
-            qt6-qtbase-devel \
-            kf6-kwindowsystem-devel \
-            dbusmenu-qt6-devel
+            qt6-qtbase-devel
+            
+      - name: Find dbusmenu Qt6 package name
+        run: dnf search dbusmenu 2>/dev/null | grep -i qt || echo "(no qt match)"
 
       - name: Configure
         run: >
