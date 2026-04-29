@@ -27,7 +27,6 @@ jobs:
             cmake \
             extra-cmake-modules \
             ninja-build \
-            git \
             qt6-base-dev \
             qt6-declarative-dev \
             libkf6windowsystem-dev
